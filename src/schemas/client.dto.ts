@@ -4,3 +4,9 @@ export type RegistrarClienteDTO = {
   email: string
   celular: string
 }
+
+export type RecargaBilleteraDTO = {
+  documento: number
+  celular: string
+  valor: number
+}
