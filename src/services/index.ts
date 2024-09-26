@@ -59,3 +59,31 @@ export const recargaBilletera = async (req: Request<{}, {}, RecargaBilleteraDTO>
     })
   }
 }
+
+export const consultaSaldo = async (
+  req: Request<{ documento: string }, {}, {}, { celular: string }>,
+  res: Response
+) => {
+  try {
+    const { documento } = req.params
+    const { celular } = req.query
+
+    const client = await ClientModel.findOne({ $and: [{ documento }, { celular }] })
+    if (!client)
+      return res.status(401).json({
+        success: 'FAILED',
+        message: 'Las crendenciales no coinciden! Intente de nuevo',
+      })
+
+    return res.status(200).json({
+      success: 'OK',
+      data: client,
+      message: 'Ingreso correcto',
+    })
+  } catch (err) {
+    return res.status(500).json({
+      sucess: 'FAILED',
+      message: 'Error del servidor',
+    })
+  }
+}
