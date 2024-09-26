@@ -10,3 +10,9 @@ export type RecargaBilleteraDTO = {
   celular: string
   valor: number
 }
+
+export type PagarCompraDTO = {
+  documento: number
+  celular: string
+  monto: number
+}
