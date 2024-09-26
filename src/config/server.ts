@@ -3,6 +3,7 @@ import cors from 'cors'
 import morgan from 'morgan'
 import routes from '../routes'
 import dotenv from 'dotenv'
+import { connectDB } from './db'
 
 dotenv.config()
 
@@ -14,5 +15,7 @@ app.use(morgan('dev'))
 app.use('/', routes)
 
 app.set('PORT', process.env.PORT || 5000)
+
+connectDB()
 
 export default app

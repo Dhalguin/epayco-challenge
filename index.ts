@@ -1,7 +1,4 @@
-import { connectDB } from './config/db'
-import app from './config/server'
-
-connectDB()
+import app from './src/config/server'
 
 const PORT = app.get('PORT')
 
