@@ -1,7 +1,10 @@
 import { Request, Response } from 'express'
-import { PagarCompraDTO, RecargaBilleteraDTO, RegistrarClienteDTO } from '../schemas/client.dto'
+import { ConfirmPaymentDTO, GenerateTokenDTO, RecargaBilleteraDTO, RegistrarClienteDTO } from '../schemas/client.dto'
 import { ClientModel } from '../schemas'
-import { roundNumber } from '../utils/number'
+import { generateToken, roundNumber } from '../utils/number'
+import crypto from 'crypto'
+// import { sendMail } from '../config/nodemailer'
+import { TokenModel } from '../schemas/token/token.schema'
 
 export const registroCliente = async (req: Request<{}, {}, RegistrarClienteDTO>, res: Response) => {
   try {
@@ -61,9 +64,9 @@ export const recargaBilletera = async (req: Request<{}, {}, RecargaBilleteraDTO>
   }
 }
 
-export const pagarCompra = async (req: Request<{}, {}, PagarCompraDTO>, res: Response) => {
+export const pagar = async (req: Request<{}, {}, GenerateTokenDTO>, res: Response) => {
   try {
-    const { documento, celular, monto } = req.body
+    const { documento, celular } = req.body
 
     const client = await ClientModel.findOne({ $and: [{ documento }, { celular }] })
     if (!client)
@@ -72,19 +75,60 @@ export const pagarCompra = async (req: Request<{}, {}, PagarCompraDTO>, res: Res
         message: 'No se pudo realizar el pago',
       })
 
-    if (monto > client.valor)
-      return res.status(400).json({
+    const token = Number(generateToken(6))
+    const sessionId = crypto.randomBytes(8).toString('hex')
+
+    await TokenModel.create({
+      _clientId: client._id,
+      token,
+      sessionId,
+    })
+    // sendMail()
+
+    return res.status(200).json({
+      success: 'OK',
+      data: { sessionId, token },
+      message: 'Le hemos enviado un código de confirmación a su correo! Introduzcalo a continuación',
+    })
+  } catch (err) {
+    return res.status(500).json({
+      sucess: 'FAILED',
+      message: 'Error del servidor',
+    })
+  }
+}
+
+export const confirmarPago = async (req: Request<{}, {}, ConfirmPaymentDTO>, res: Response) => {
+  try {
+    const { token, sessionId, clientId, monto } = req.body
+
+    const searchToken = await TokenModel.findOne({ _clientId: clientId })
+    if (!searchToken || searchToken.sessionId !== sessionId)
+      return res.status(401).json({
+        success: 'FAILED',
+        message: 'El código de verificación ya expiró',
+      })
+
+    if (searchToken.token !== token)
+      return res.status(401).json({
+        success: 'FAILED',
+        message: 'El código de verificación es incorrecto',
+      })
+
+    const client = await ClientModel.findOne({ _id: clientId })
+    if (!client)
+      return res.status(401).json({
+        success: 'FAILED',
+        message: 'No se pudo confirmar el pago',
+      })
+
+    if (client.valor < monto)
+      return res.status(401).json({
         success: 'FAILED',
         message: 'Saldo insuficiente',
       })
 
-    if (monto <= 0)
-      return res.status(400).json({
-        success: 'FAILED',
-        message: 'Ingrese un monto válido',
-      })
-
-    await client.updateOne({ valor: roundNumber(client.valor - monto) })
+    await client.updateOne({ valor: client.valor - monto })
 
     return res.status(200).json({
       success: 'OK',
