@@ -3,7 +3,7 @@ import { ConfirmPaymentDTO, GenerateTokenDTO, RecargaBilleteraDTO, RegistrarClie
 import { ClientModel } from '../schemas'
 import { generateToken, roundNumber } from '../utils/number'
 import crypto from 'crypto'
-// import { sendMail } from '../config/nodemailer'
+import { sendMail } from '../config/nodemailer'
 import { TokenModel } from '../schemas/token/token.schema'
 
 export const registroCliente = async (req: Request<{}, {}, RegistrarClienteDTO>, res: Response) => {
@@ -50,7 +50,7 @@ export const recargaBilletera = async (req: Request<{}, {}, RecargaBilleteraDTO>
         message: 'No se pudo recargar la billetera',
       })
 
-    await client.updateOne({ valor: client.valor + valor })
+    await client.updateOne({ valor: roundNumber(client.valor + valor) })
 
     return res.status(200).json({
       success: 'OK',
@@ -78,16 +78,23 @@ export const pagar = async (req: Request<{}, {}, GenerateTokenDTO>, res: Respons
     const token = Number(generateToken(6))
     const sessionId = crypto.randomBytes(8).toString('hex')
 
+    const nodemailer = await sendMail(token)
+
+    if (!nodemailer.messageId)
+      return res.status(405).json({
+        success: 'FAILED',
+        message: 'No se pudo enviar el correo',
+      })
+
     await TokenModel.create({
       _clientId: client._id,
       token,
       sessionId,
     })
-    // sendMail()
 
     return res.status(200).json({
       success: 'OK',
-      data: { sessionId, token },
+      data: { sessionId },
       message: 'Le hemos enviado un código de confirmación a su correo! Introduzcalo a continuación',
     })
   } catch (err) {
@@ -128,7 +135,7 @@ export const confirmarPago = async (req: Request<{}, {}, ConfirmPaymentDTO>, res
         message: 'Saldo insuficiente',
       })
 
-    await client.updateOne({ valor: client.valor - monto })
+    await client.updateOne({ valor: roundNumber(client.valor - monto) })
 
     return res.status(200).json({
       success: 'OK',
