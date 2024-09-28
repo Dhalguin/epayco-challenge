@@ -142,6 +142,8 @@ export const confirmarPago = async (req: Request<{}, {}, ConfirmPaymentDTO>, res
 
     await client.updateOne({ valor: roundNumber(client.valor - monto) })
 
+    await searchToken.deleteOne()
+
     return res.status(200).json({
       success: 'OK',
       message: 'Pago realizado correctamente',
