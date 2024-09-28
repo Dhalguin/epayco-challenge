@@ -83,7 +83,7 @@ export const pagar = async (req: Request<{}, {}, GenerateTokenDTO>, res: Respons
     const token = Number(generateToken(6))
     const sessionId = crypto.randomBytes(8).toString('hex')
 
-    const nodemailer = await sendMail(token)
+    const nodemailer = await sendMail(token, client.email)
 
     if (!nodemailer.messageId)
       return res.status(405).json({
