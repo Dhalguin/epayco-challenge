@@ -1,6 +1,11 @@
 import { Request, Response } from 'express'
-import { ConfirmPaymentDTO, GenerateTokenDTO, RecargaBilleteraDTO, RegistrarClienteDTO } from '../schemas/client.dto'
-import { ClientModel } from '../schemas'
+import {
+  ConfirmPaymentDTO,
+  GenerateTokenDTO,
+  RecargaBilleteraDTO,
+  RegistrarClienteDTO,
+} from '../schemas/client/client.dto'
+import { ClientModel } from '../schemas/client/client.schema'
 import { generateToken, roundNumber } from '../utils/number'
 import crypto from 'crypto'
 import { sendMail } from '../config/nodemailer'
