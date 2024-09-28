@@ -16,7 +16,7 @@ export const sendMail = async (token: number) => {
     from: process.env.NODEMAILER_USER_EMAIL,
     to: process.env.NODEMAILER_USER_EMAIL,
     subject: 'Código de verificación',
-    text: 'Su código de verificación es: ' + token,
+    text: 'Su código de verificación es: ' + token + '\n\nEste código va a expirar dentro de 10 minutos.',
   }
 
   return await transporter.sendMail(mailOptions)
