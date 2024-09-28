@@ -1,8 +1,6 @@
 import nodemailer from 'nodemailer'
 
 export const sendMail = async (token: number) => {
-  console.log(process.env)
-
   const transporter = nodemailer.createTransport({
     service: 'Gmail',
     host: process.env.NODEMAILER_HOST,
